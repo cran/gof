@@ -66,8 +66,10 @@ summary(a)
 data(pbc)
 fit.cox <- coxph(Surv(time,status) ~ age + edema + bili + protime, data=pbc)
 system.time(pbc.gof <- cumres(fit.cox,R=2000))
+\dontrun{
 par(mfrow=c(2,2))
 plot(pbc.gof, ci=TRUE, legend=NULL)
+}
 
 }
 \author{Klaus K. Holst and Thomas Scheike}

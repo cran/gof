@@ -37,15 +37,9 @@
 
 #include <iterator>
 
-#ifdef SCYTHE_COMPILE_DIRECT
 #include "defs.h"
 #include "error.h"
 #include "matrix.h"
-#else
-#include "scythestat/defs.h"
-#include "scythestat/error.h"
-#include "scythestat/matrix.h"
-#endif
 
 namespace scythe {
 	/* convenience typedefs */

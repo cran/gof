@@ -1,3 +1,12 @@
+Changes to Version 0.6-4 (8/4-2009)
+	- Fixed bug in cumres.coxph appearing for models with only one
+          predictor (stupid [...,drop=FALSE] missing)
+	- CITATION added
+
+Changes to Version 0.6-3 (26/2-2009)
+	- Windows compilation fix
+	- onload function added
+
 Changes to Version 0.6-2 (13/1-2009)
 	- Code cleanup
 

@@ -13,11 +13,11 @@ function(model,
     time <- Y[, "time"]; 
     status <- Y[, "status"]
   } else stop("Expected right-censored data.");
-  X <- na.omit(model.matrix(model)[,-1]) ## Discard intercept
+  X <- na.omit(model.matrix(model)[,-1,drop=FALSE]) ## Discard intercept
 
   ot <- order(time,status==0); # order in time, status=1 first for ties
   time <- time[ot]; status <- status[ot]
-  X <- X[ot,]
+  X <- X[ot,,drop=FALSE]
   n <- length(time)
   nd <- sum(status)
   p <- ncol(X)
@@ -25,7 +25,7 @@ function(model,
   dtimes <- time[index.dtimes]
 
   Iinv <- model$naive.var
-  beta.iid <- residuals(model,type="dfbeta")[ot,]
+  beta.iid <- matrix(residuals(model,type="dfbeta"),ncol=p)[ot,,drop=FALSE]
   Mres <- Mt <- residuals(model, type="martingale")[ot]
   ##  cox.schoen <- residuals(model,type="schoen")[,ot]
   beta <- coef(model)
@@ -94,7 +94,6 @@ function(model,
               cvalues=allcvalues, variable=UsedVars,
               R=R, sd=Wsd, type=mytype, model="coxph")
   class(res) <- "cumres"
-##  res
-  invisible(res)
+  res
 }
 

@@ -1,5 +1,5 @@
 useDynLib(gof)
-
+import(utils)
 export(
        cumres
        )
