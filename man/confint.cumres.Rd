@@ -6,7 +6,7 @@
   process under the null.
 }
 \usage{
-\method{confint}{cumres} (object, parm=1, level=0.95, cval=NULL, ...)
+\method{confint}{cumres} (object, parm=1:length(object$variable), level=0.95, cval=NULL, ...)
 }
 
 \arguments{
@@ -26,7 +26,7 @@
   \item{yu}{Upper simultaneous confidence limit.}
 }
 \seealso{
-  \code{\link[cumres]{cumres}}
+  \code{\link[gof]{cumres}}
 }
 \examples{
 n <- 500; x <- abs(rnorm(n,sd=0.2))+0.01; y <- sqrt(x) + rnorm(n,sd=0.2)

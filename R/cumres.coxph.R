@@ -1,5 +1,4 @@
-`cumres.coxph` <-
-function(model,
+`cumres.coxph` <- function(model,
          variable=c(colnames(model.matrix(model))),
          type=c("score","residual"),
          R=500, plots=min(R,50), seed=round(runif(1,1,1e9)), ...) {
@@ -13,7 +12,8 @@ function(model,
     time <- Y[, "time"]; 
     status <- Y[, "status"]
   } else stop("Expected right-censored data.");
-  X <- na.omit(model.matrix(model)[,-1,drop=FALSE]) ## Discard intercept
+##  X <- na.omit(model.matrix(model)[,-1,drop=FALSE]) ## Discard intercept
+  X <- na.omit(model.matrix(model))
 
   ot <- order(time,status==0); # order in time, status=1 first for ties
   time <- time[ot]; status <- status[ot]
@@ -26,7 +26,7 @@ function(model,
 
   Iinv <- model$naive.var
   beta.iid <- matrix(residuals(model,type="dfbeta"),ncol=p)[ot,,drop=FALSE]
-  Mres <- Mt <- residuals(model, type="martingale")[ot]
+  ##  Mres <- Mt <- residuals(model, type="martingale")[ot]
   ##  cox.schoen <- residuals(model,type="schoen")[,ot]
   beta <- coef(model)
 
@@ -35,7 +35,7 @@ function(model,
     variable <- na.omit(colnames(X)[variable])
   variable <- unique(variable)
   UsedData <- X[,na.omit(match(variable, colnames(X))),drop=FALSE]
-
+  
   myvars <- colnames(UsedData)
   ## Martingale residuals only cumulated after variables with more than two levels
   ##  myvars <- colnames(UsedData)[apply(UsedData,2,function(x) length(unique(x))>2)] ## Only consider variables with more than two levels

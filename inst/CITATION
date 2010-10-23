@@ -6,7 +6,7 @@ author <- desc["Author"]
 plist <- personList(as.person(author))
 textver <- paste(author, " (", year, "). ", title, ". ", vers, ".", sep="")
 
-citHeader("To cite 'structural' in publications use:")
+citHeader("To cite 'gof' in publications use:")
 
 citEntry(entry="Manual",
          title = title,

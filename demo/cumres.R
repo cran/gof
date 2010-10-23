@@ -1,4 +1,4 @@
-example(cumres)
+example(cumres.glm)
 par(mfrow=c(2,2));
 plot(g1)
 plot(g1, ci="sim", legend="type2")

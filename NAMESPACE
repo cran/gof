@@ -7,6 +7,7 @@ export(
 S3method(cumres, lm)
 S3method(cumres, glm)
 S3method(cumres, coxph)
+S3method(cumres, lvmfit)
 S3method(print, cumres)
 S3method(plot, cumres)
 S3method(confint, cumres)
