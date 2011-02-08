@@ -1,7 +1,7 @@
 `cumres.coxph` <- function(model,
          variable=c(colnames(model.matrix(model))),
          type=c("score","residual"),
-         R=500, plots=min(R,50), seed=round(runif(1,1,1e9)), ...) {
+         R=1000, plots=min(R,50), seed=round(runif(1,1,1e9)), ...) {
 
   require(survival)
   mt <- model.frame(model)
@@ -29,6 +29,7 @@
   ##  Mres <- Mt <- residuals(model, type="martingale")[ot]
   ##  cox.schoen <- residuals(model,type="schoen")[,ot]
   beta <- coef(model)
+  if(any(is.na(beta))) stop("Over-parametrized model")
 
   ##  if (!is.na(match(response, variable))) variable[match(response, variable)] <- "predicted"
   if (is.numeric(variable))

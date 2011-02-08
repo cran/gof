@@ -1,6 +1,6 @@
 \name{cumres.coxph}
 \alias{cumres.coxph}
-\title{Calculates GOF measures for Cox's propoportional hazard model for right
+\title{Calculates GoF measures for Cox's propoportional hazard model for right
   censored survival times
 }
 \description{
@@ -11,13 +11,13 @@
 \method{cumres}{coxph} (model,
          variable=c(colnames(model.matrix(model))),
          type=c("score","residual"),
-         R=500, plots=min(R,50), seed=round(runif(1,1,1e9)), ...)
+         R=1000, plots=min(R,50), seed=round(runif(1,1,1e9)), ...)
 }
 \arguments{
   \item{model}{Model object (\code{lm} or \code{glm})}
   \item{variable}{List of variable to order the residuals after}
   \item{R}{Number of samples used in simulation}
-  \item{type}{Type of GOF-procedure},
+  \item{type}{Type of GoF-procedure},
   \item{plots}{Number of realizations to save for use in the
     plot-routine}
   \item{seed}{Random seed}
@@ -39,8 +39,8 @@
 \seealso{
   \code{\link[gof]{cumres.glm}},
   \code{\link[survival]{coxph}}, and
-  \code{\link[timereg]{cox.aalen}} in the timereg package
-  for similar GOF-methods for survival-data. 
+  \code{\link[timereg]{cox.aalen}} in the \code{timereg} package
+  for similar GoF-methods for survival-data. 
 }
 \examples{
 library(survival)
@@ -66,7 +66,7 @@ summary(a)
 data(pbc)
 fit.cox <- coxph(Surv(time,status==2) ~ age + edema + bili + protime, data=pbc)
 system.time(pbc.gof <- cumres(fit.cox,R=2000))
-\dontrun{
+\donttest{
 par(mfrow=c(2,2))
 plot(pbc.gof, ci=TRUE, legend=NULL)
 }

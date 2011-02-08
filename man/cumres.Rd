@@ -2,7 +2,7 @@
 \alias{cumres}
 \alias{cumres.glm}
 \alias{cumres.lm}
-\title{Calculates GOF statistics based on cumulative residual processes}
+\title{Calculates GoF statistics based on cumulative residual processes}
 \description{
   Given the generalized linear models model
   \deqn{g(E(Y_i|X_{i1},...,X_{ik})) = \sum_{i=1}^k \beta_jX_{ij}}
@@ -19,7 +19,7 @@
 \method{cumres}{glm} (model,
          variable=c("predicted",colnames(model.matrix(model))),
          data=data.frame(model.matrix(model)),
-         R=500, b=0, plots=min(R,50),
+         R=1000, b=0, plots=min(R,50),
          breakties=1e-12,
          seed=round(runif(1,1,1e9)),...)
 }
@@ -45,7 +45,7 @@
   regression models with canonical links are supported.  
 }
 \seealso{\code{\link[timereg]{cox.aalen}} in the \code{timereg}-package
-  for similar GOF-methods for survival-data.}
+  for similar GoF-methods for survival-data.}
 \references{
 D.Y. Lin and L.J. Wei and Z. Ying (2002) \emph{Model-Checking Techniques
   Based on Cumulative Residuals}. Biometrics, Volume 58, pp 1-12.
@@ -68,7 +68,7 @@ sim1 <- function(n=100, f=function(x1,x2) {10+x1+x2^2}, sd=1, seed=1) {
 d <- sim1(100); l <- lm(y ~ x1 + x2,d)
 system.time(g <- cumres(l, R=100, plots=50))
 g
-\dontrun{plot(g)}
+\donttest{plot(g)}
 g1 <- cumres(l, c("y"), R=100, plots=50)
 g1
 g2 <- cumres(l, c("y"), R=100, plots=50, b=0.5)
