@@ -51,10 +51,9 @@ Matrix<double> Wscorerate_cox(unsigned Var,
   
   Matrix<double> Wscorerate(n,nd); 
   for (unsigned i=0; i<n; i++) {
+    Matrix<double> betaiidrow = t(beta_iid(i,_));
     for (unsigned j=0; j<nd; j++) {
       Matrix<double> Itd = It(j,_); Itd.resize(p,p);
-      Matrix<double> betaiidrow = t(beta_iid(i,_));
-      //      Wscorerate(i,j) = Mscorerate(i,j) - (Itd*betaiidrow)[Var];
       Wscorerate(i,j) = Mscorerate(j,i) - (Itd*betaiidrow)[Var];
     }
   }   
@@ -98,11 +97,8 @@ extern "C" {
     Matrix<double> xbeta = X*beta;
     Matrix<double> RR = exp(xbeta);
     Matrix<double> S_0 = chrows(reverse(cumsum(reverse(RR))), index_dtimes);
-    //    cerr << "###" << endl;
     Matrix<double> cumhaz = cumsum(1/S_0);
-    //    cerr << "###" << endl;
     Matrix<double> cumhaztime = Cpred(cbind(dtimes,cumhaz), time);
-    //    cerr << "..." << endl;
     Matrix<double> XRR(*n,*p);
     unsigned p2 = (*p)*(*p);
     Matrix<double> XRRX(*n,p2);
@@ -111,7 +107,6 @@ extern "C" {
       // Matrix<double> newr = RR[i]*crossprod(X(i,_)); newr.resize(1,p2);
       XRRX(i,_) = RR[i]*crossprod(X(i,_));
     }
-    //    cerr << "..." << endl;
     Matrix<double> XRR_ = chrows(XRR, index_times);
     Matrix<double> XRRX_ = chrows(XRRX, index_times);
     Matrix<double> S_1  = chrows(chrows(cumsum(XRR_),index_times), index_dtimes); // Derivative of score,  n x p ## Martinussen & Scheike p. 182   
@@ -119,7 +114,6 @@ extern "C" {
     Matrix<double> E = multCol(S_1,1/S_0);
     Matrix<double> intS1oS02 = multCol(E, 1/S_0);
     intS1oS02 = cumsum(intS1oS02); // nd x p
-    //    cerr << "..." << endl;
     Matrix<double> intS1oS02time = Cpred(cbind(dtimes,intS1oS02),time);
     Matrix<double> E_2(*nd,p2,false);
     for (int i=0; i<*nd; i++) { 
@@ -131,17 +125,16 @@ extern "C" {
     Matrix<double> schoen = chrows(X,index_dtimes) - E; // Schoenfeld residuals
 
     Matrix<double> WW;
+
     if (*Type>1) {
       // Martingale residuals not yet implemented
     } else {        
       WW = Wscorerate_cox(paridx[0],X,schoen,RR,E,S_0,cumhaz,beta_iid,It,index_dtimes,time);
     }
-
     Matrix<double> sdW = apply(WW,2,ss2);    
     Matrix<double> Score = cumsum(schoen)(_,paridx[0]);
     double KSobs = KolmogorovSmirnov(Score);
     double CvMobs = CramerVonMises(Score,dtimes);
-
     unsigned KScount=0; 
     unsigned CvMcount=0;
     Matrix<double> Res(min((double)*plotnum,(double)*R),*nd);

@@ -1,19 +1,21 @@
 Package: gof
 Type: Package
 Title: Model-diagnostics based on cumulative residuals
-Version: 0.8-2
-Date: 2012-06-14
+Version: 0.9.0
+Date: 2013-04-19
 Author: Klaus K. Holst
 Maintainer: Klaus. K. Holst <kkho@biostat.ku.dk>
 Description: Implementation of model-checking techniques for
         generalized linear models and linear structural equation models
         based on cumulative residuals
-Depends: R (>= 2.8), survival, Rcpp (>= 0.9.2), RcppArmadillo (>=
-        0.2.17)
-LinkingTo: Rcpp, RcppArmadillo
-Suggests: numDeriv, lava
+Depends: R (>= 2.15), survival
+Suggests: numDeriv, lava (>= 1.2)
 License: GPL
 LazyLoad: yes
-Packaged: 2012-06-14 13:16:53 UTC; nqh369
+Collate: 'confint.R' 'cumres.coxph.R' 'cumres.default.R' 'cumres.glm.R'
+        'cumres.lvmfit.R' 'gof-package.R' 'onload.R' 'plot.R' 'print.R'
+        'vcov.R'
+Packaged: 2013-04-25 05:31:14 UTC; klaus
+NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2012-06-14 18:17:01
+Date/Publication: 2013-04-25 10:07:57
