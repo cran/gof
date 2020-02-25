@@ -1,14 +1,27 @@
-##' @S3method print cumres
+##' @export
 print.cumres <- function(x,...) {
-  cat("\n");
-  for (i in 1:length(x$variable)) {
-    cat("Kolmogorov-Smirnov-test: p-value=", x$KS[i], "\n", sep="")
-    cat("Cramer von Mises-test: p-value=", x$CvM[i], "\n", sep="")
-    cat("Based on ", x$R, " realizations. Cumulated residuals ordered by ", x$variable[i], "-variable.\n", sep="")
-    cat("---\n");
-  }
-  invisible(x)
+    cat("\n")
+    print(coef(x), ...)
+    cat("\nR =",x$R,"\n")
+    invisible(x)
 }
 
-##' @S3method summary cumres
-summary.cumres <- function(object,...) print(object,...)
+##' @export
+summary.cumres <- function(object,...) {
+    res <- with(object, list(KS=KS, CvM=CvM, R=R, n=n, type=type, model=model, variable=variable))
+    return(structure(res, class="summary.cumres"))
+}
+
+##' @export
+print.summary.cumres <- function(x,...) {
+    cat("\n");
+    for (i in 1:length(x$variable)) {
+        if (!is.null(x$KS)) cat("Kolmogorov-Smirnov-test: p-value=", x$KS[i], "\n", sep="")
+        if (!is.null(x$CvM)) cat("Cramer von Mises-test: p-value=", x$CvM[i], "\n", sep="")
+        cat("Based on ", x$R, " realizations. Cumulated residuals ordered by '", x$variable[i], "'.\n", sep="")
+        cat("---\n");
+    }
+    invisible(x)
+}
+
+

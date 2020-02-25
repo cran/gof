@@ -1,8 +1,35 @@
-##' @export
-`cumres` <-
-function(model,...) UseMethod("cumres")
+subset_t <- function(t, n.qt=50, n.eq=50) {    
+    t <- sort(t)
+    t1a <- t[mets::fast.approx(t, seq(t[1], t[length(t)], length.out=n.eq))]
+    t1b <- quantile(t, seq(0,1,length.out=n.qt))
+    t1 <- sort(union(t1a, t1b))
+    pos <- 1
+    idx <- numeric(length(t)) # grouping
+    for (i in seq_along(idx)) {
+        if (t[i]>t1[pos]) {
+            pos <- pos+1        
+        }
+        idx[i] <- pos
+    }
+    idx1 <- mets::dby(data.frame(id=idx, pos=seq_along(idx)), pos~id, pos=max, REDUCE=T)$pos
+    return( list(t=t, group=idx, subset=idx1) )
+}
 
-##' @S3method cumres lm
+
+gof_samplestat <- function(cumres_obj, R=1e3, x=NULL, idx=seq_along(x)-1) {
+    if (!is.null(x)) cumres_obj$reorder(x)        
+    teststat <- cumres_obj$samplestat(R, idx, FALSE)
+    W0 <- cumres_obj$obs()
+    t0 <- cumres_obj$t
+    ks0 <- KolmogorovSmirnov(W0)
+    cvm0 <- CramerVonMises(W0,t0)
+    return(list(pval.ks=mean(teststat[,1]>ks0), ks=ks0,
+                pval.cvm=mean(teststat[,2]>cvm0), cvm=cvm0,
+                t=t0, w=W0))
+}
+
+
+##' @export
 `cumres.lm` <- function(model,...) {
   cumres.glm(model,...)
 }
@@ -64,12 +91,11 @@ function(model,...) UseMethod("cumres")
 ##' g2 <- cumres(l, c("y"), R=100, plots=50, b=0.5)
 ##' g2
 ##' 
-##' @method cumres glm
 `cumres.glm` <- function(model,
-         variable=c("predicted",colnames(model.matrix(model))),
-         data=data.frame(model.matrix(model)), 
-         R=1000, b=0, plots=min(R,50),breakties=1e-12,
-         seed=round(runif(1,1,1e9)),...) {
+                  variable=c("predicted",colnames(model.matrix(model))),
+                  data=data.frame(model.matrix(model)), 
+                  R=1000, b=0, plots=min(R,50),breakties=1e-12,
+                  seed=round(runif(1,1,1e9)),...) {
   dginv <- function(z) 1
   a.phi <- 1
   switch(class(model)[1],
@@ -82,8 +108,22 @@ function(model,...) UseMethod("cumres")
            if (f$family=="gaussian") {
              a.phi <- summary(model)$dispersion
            }
-           ## stop("Refit model using 'lm'")           
 
+           w <- model.extract(model.frame(model),"weights")
+           if (!is.null(w)) {
+               stop("Weight argument not supported")
+           }
+           if (grepl("matrix",attr(terms(model),"dataClasses")[1])) {
+               ## success,failure -> refit
+               y <- model.extract(model.frame(model),"response")               
+               X <- model.matrix(model)
+               y0 <- unlist(apply(y[,1:2],1,function(x) rep(c(1,0),as.vector(x))))
+               X0 <- as.matrix(X[rep(seq(nrow(y)),rowSums(y[,1:2])),,drop=FALSE])
+               cl <- model$call
+               cl$formula <- y0 ~ -1+X0
+               cl$data <- NULL
+               model <- eval(cl)
+           }                  
            g <- f$linkfun
            ginv <- f$linkinv
            dginv <- f$mu.eta ## D[linkinv]
@@ -104,65 +144,30 @@ function(model,...) UseMethod("cumres")
   n <- nrow(X)  
   r <- residuals(model, type="response") ## y-g^{-1}(Xb)
   yhat <- predict(model, type="response") ## g^{-1}(Xb)
-  ##  Xbeta <- predict(model, type="link") ## X*b
+  ## Xbeta <- predict(model, type="link") ## X*b
   beta <- coef(model)
-  if(any(is.na(beta))) stop("Over-parametrized model")
   Xbeta <- X%*%beta
+  if(any(is.na(beta))) stop("Over-parametrized model")
  
-  etaraw <- (as.numeric(dginv(Xbeta))*X)
-  hatW.MC <- function(x) {
-    myorder <- order(x)
-    x <- x[myorder]
-    Ii <- vcov(model)
-    ##    S <- (X*(as.vector(h(Xbeta))*r))/a.phi
-    A <- as.vector(h(Xbeta)*r)/a.phi 
-    S <- apply(X,2,function(x) x*A)
-    beta.iid <- Ii%*%t(S[myorder,,drop=FALSE])
-    r0 <- r[myorder]
-    D0 <- etaraw[myorder,,drop=FALSE]
-    Wfun <- "W2"
-    if (b!=0) { Wfun <- "W" }
-    output <- .C(Wfun,
-                 R=as.integer(R), ## Number of realizations
-                 b=as.double(b), ## Moving average parameter
-                 n=as.integer(n), ## Number of observations
-                 npar=as.integer(nrow(Ii)),
-                 xdata=as.double(x), ## Observations to cumulate after 
-                 rdata=as.double(r0), ## Residuals (one-dimensional)
-                 betaiiddata=as.double(beta.iid), ## Score-process
-                 etarawdata=as.double(D0), ## Eta (derivative of terms in cummulated process W)
-                 plotnum=as.integer(plots), ## Number of realizations to save (for later plot)
-                 seed=as.integer(seed), ## Seed (will probably rely on R's rangen in future version)
-                 KS=as.double(0), ## Return: Kolmogorov Smirnov statistics for each realization
-                 CvM=as.double(0), ## Return: Cramer von Mises statistics for each realization
-                 Wsd=as.double(numeric(n)), ## Return: Pointwise variance of W(x)
-                 cvalues=as.double(numeric(R)), ## Return: value for each realization s.t.  +/- cvalue * Wsd contains W*
-                 Ws=as.double(numeric(plots*n)), ## Return: Saved realizations (for plotting function)
-                 Wobs=as.double(numeric(n)), ## Return: Observed process
-                 pkg="gof"
-                 )
-    ##    W <- function() { 1/sqrt(n)*cumsum(r[myorder]) }
-    return(list(output=output,x=x))
-  }
-  
+  dr <- -(as.numeric(dginv(Xbeta))*X)
+  ic <- lava::iid(model)
+  cr <- new(CumRes, r, dr, ic) 
+
   if (!is.na(match(response, variable))) variable[match(response, variable)] <- "predicted"
   variable <- unique(variable)
   UsedData <- X[,na.omit(match(variable, colnames(X))),drop=FALSE]
   myvars <- colnames(UsedData)[apply(UsedData,2,function(x) length(unique(x))>2)] ## Only consider variables with more than two levels
   if ("predicted"%in%variable) myvars <- c("predicted",myvars)
-
-  
   untie <- runif(n,0,breakties)
   
   W <- c()
   What <- c()
-  Wsd <- c()  
   KS <- c()
   CvM <- c()
   mytype <- c()
   UsedVars <- c()
   UsedData <- c()
-  allcvalues <- c();
+  
   for (v in myvars) {
     x <- NULL
     if (v=="predicted") {
@@ -171,16 +176,21 @@ function(model,...) UseMethod("cumres")
       x <- X[,v]       
     }
     if (!is.null(x)) {
-      UsedVars <- c(UsedVars, v)
-      onesim <- hatW.MC(x+untie) ## obs: break ties
-      UsedData <- cbind(UsedData, onesim$x);  
-      W <- cbind(W, onesim$output$Wobs)
-      Wsd <- cbind(Wsd, onesim$output$Wsd)
-      What <- c(What, list(matrix(onesim$output$Ws,nrow=n)));
-      KS <- c(KS, onesim$output$KS);  CvM <- c(CvM, onesim$output$CvM)
-      allcvalues <- cbind(allcvalues, onesim$output$cvalues)
-      mytype <- c(mytype,"residual")
-    } else cat("Variable '", v , "' not found.\n",sep="")
+        UsedVars <- c(UsedVars, v)
+        cr$reorder(x+untie)
+        idx <- seq(n)-1
+        teststat <- gof_samplestat(cr, R=R, x=x, idx=idx)
+        KS <- c(KS, teststat$pval.ks)
+        CvM <- c(CvM, teststat$pval.cvm)
+        UsedData <- cbind(UsedData, teststat$t);
+        W <- cbind(W, teststat$w)        
+        What0 <- matrix(0, length(idx), plots)
+        for (i in seq(plots)) What0[,i] <- cr$sample1(idx)
+        What <- c(What, list(What0))
+        ##Wsd <- cbind(Wsd, onesim$output$Wsd)
+        ##allcvalues <- cbind(allcvalues, onesim$output$cvalues)
+        mytype <- c(mytype,"residual")
+    } else warning("Variable '", v , "' not found.\n",sep="")
   }
 
   if (length(UsedVars)<1) 
@@ -189,10 +199,11 @@ function(model,...) UseMethod("cumres")
   res <- list(W=W, What=What,
               x=UsedData,
               KS=KS, CvM=CvM,
-              R=R, n=nrow(UsedData), sd=Wsd, 
-              cvalues=allcvalues, variable=UsedVars,
+              R=R, n=nrow(UsedData),
+              sd=NULL, cvalues=NULL,
+              variable=UsedVars,
               type=mytype, untie=untie,
-              model=class(model)[1]) ##, onesim$output$WW)
+              model=class(model)[1])
   class(res) <- "cumres"
   res
 }

@@ -1,5 +1,4 @@
 cumresMaxSet <- function(m,var,...) {
-  if (!require("lava")) stop("package 'lava' not available")
   A <- t(lava::index(m)$A)
   Afix <- A; Afix[t(lava::index(m)$M0)==1] <- 0
   A[A!=0] <- 1
@@ -40,12 +39,11 @@ cumresMaxSet <- function(m,var,...) {
 ##' @param R Number of processes to simulate
 ##' @param b Moving average parameter
 ##' @param plots Number of processes to save for use with the plot method
-##' @param seed Random seed
 ##' @param \dots Additional arguments parsed on to lower-level functions
 ##' @method cumres lvmfit
 ##' @export
 ##' @return Returns a \code{cumres} object with associated
-##' \code{plot},\code{print},\code{confint} methods
+##' \code{plot},\code{print},\code{coef} methods
 ##' @author Klaus K. Holst
 ##' @references B.N. Sanchez and E. A. Houseman and L. M. Ryan (2009)
 ##' \emph{Residual-Based Diagnostics for Structural Equation Models}. Biometrics
@@ -73,11 +71,10 @@ cumresMaxSet <- function(m,var,...) {
 ##' 
 ##' }
 cumres.lvmfit <- function(model,y,x,full=FALSE,
-                          data=model.frame(model),p,
-                          R=1000, b=0, plots=min(R,50), seed=round(runif(1,1,1e9)),
-                          ...) {
-  if (!require("lava")) stop("package 'lava' not available")
-  if (!require("numDeriv")) stop("package 'numDeriv' not available")    
+                   data=model.frame(model),p,
+                   R=1000, b=0, plots=min(R,50),
+                   ...) {
+  if (!requireNamespace("numDeriv")) stop("package 'numDeriv' not available")    
 
   cl <- match.call()
   
@@ -130,7 +127,7 @@ cumres.lvmfit <- function(model,y,x,full=FALSE,
     }
     return(res)
   }
-  
+
   if ((is.character(x) | is.list(x)) & length(x)>1) {
     res <- c()
     ix <- 0
@@ -165,70 +162,25 @@ cumres.lvmfit <- function(model,y,x,full=FALSE,
   }
   n <- length(x0)
 
-  hatW.MC <- function(x) {
-    ord <- order(x)
-    output <- .C("W2",
-                 R=as.integer(R), ## Number of realizations
-                 b=as.double(b), ## Moving average parameter
-                 n=as.integer(n), ## Number of observations
-                 npar=as.integer(length(p)), ## Number of parameters (columns in design)
-                 xdata=as.double(x), ## Observations to cummulate after 
-                 rdata=as.double(r), ## Residuals (one-dimensional)
-                 betaiiddata=as.double(beta.iid), ## Score-process
-                 etarawdata=as.double(grad), ## Eta (derivative of terms in cummulated process W)
-                 plotnum=as.integer(plots), ## Number of realizations to save (for later plot)
-                 seed=as.integer(seed), ## Seed (will probably rely on R's randgen in future version)
-                 KS=as.double(0), ## Return: Kolmogorov Smirnov statistics for each realization
-                 CvM=as.double(0), ## Return: Cramer von Mises statistics for each realization
-                 Wsd=as.double(numeric(n)), ## Return: Pointwise variance of W(x)
-                 cvalues=as.double(numeric(R)), ## Return: value for each realization s.t.  +/- cvalue * Wsd contains W*
-                 Ws=as.double(numeric(plots*n)), ## Return: Saved realizations (for plotting function)
-                 Wobs=as.double(numeric(n)) ## Observed process
-                 , PACKAGE="gof")
-    return(list(output=output,x=x[ord]))
-  }
-  
   if (is.function(y)) {
     r <- y(p)
     grad <- attributes(r)$grad
     if (is.null(grad))
-      grad <- -numDeriv::jacobian(y,p,method=lava::lava.options()$Dmethod)
+      grad <- numDeriv::jacobian(y,p,method=lava::lava.options()$Dmethod)
   } else {
     myres <- function(p) {
       rr <- predict(model,vars(model),residual=TRUE,p=p)
       if (is.matrix(rr)) return(rr[,y]) else return(rr)          
     }
     r <- myres(p)
-    grad <- -numDeriv::jacobian(myres,p,method=lava::lava.options()$Dmethod)
-  }     
+    grad <- numDeriv::jacobian(myres,p,method=lava::lava.options()$Dmethod)
+  }
 
-  ord <- order(x0)  
-  x0 <- x0[ord]
-  grad <- grad[ord,]
-  r <- r[ord]
-  ##     Ii <- solve(information(model,p), num=TRUE)
-  ## Ii <- model$vcov
-  ## Score <- lava::score(model,data=data,p=p,indiv=TRUE,weight=lava::Weight(model))[ord,]
-  ## beta.iid <- Ii%*%t(Score)
-  ## beta.iid[is.na(beta.iid)] <- 0
-  beta.iid <- t(iid(model)[ord,])/nrow(data);
-  
-  onesim <- hatW.MC(x0)
-  What <- matrix(onesim$output$Ws,nrow=n);
-
-  if (!is.character(y))  y <- NULL
-  res <- with(onesim$output,
-              list(W=cbind(Wobs), What=list(What),
-                   x=cbind(x0),
-                   KS=KS, CvM=CvM,
-                   R=R, n=n, sd=cbind(Wsd), 
-                   cvalues=cbind(cvalues), variable=ifelse(is.character(x),x,"x"),
-                   response=y,
-                   type="sem",
-                   model=class(model)[1])
-              )
-  class(res) <- "cumres"
-  
+  ord <- order(x0)
+  variable <- data.frame(x0); names(variable) <- ifelse(is.character(x),x,"x")
+  res <- cumres.default(NULL, variable=variable, r=r, dr=grad, ic=iid(model),
+                        R=R, plots=plots, b=b, ...)
+  res$type <- "sem"  
   return(res)    
 }
 

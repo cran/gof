@@ -26,18 +26,17 @@
 ##' @param title Main title
 ##' @param ... Additional arguments passed to the plot-routine.
 ##' @author Klaus K. Holst <kkho@@biostat.ku.dk>
-##' @seealso \code{\link[gof]{cumres}}
 ##' @keywords hplot regression
 ##' @examples
 ##' 
 ##' n <- 500; x <- abs(rnorm(n,sd=0.2))+0.01; y <- sqrt(x) + rnorm(n,sd=0.2)
 ##' l <- lm(y ~ x)
 ##' g <- cumres(l, R=500)
-##' plot(g, idx=1, ci="sim", col=NULL, col.ci="purple", legend="type2")
+##' plot(g, idx=1, legend="type2")
 ##' @method plot cumres
 ##' @export
 plot.cumres <- function(x, idx=1:length(x$variable),
-                        col=c("grey"),
+                        col="grey",
                         ci=TRUE,
                         col.ci="darkblue", col.alpha=0.3, lty.ci=0, level=0.95,
                         legend=c("type1","type2","none"), xlab, ylab,
@@ -70,7 +69,6 @@ plot.cumres <- function(x, idx=1:length(x$variable),
       x0 <- 1:length(x0)
       xlab <- "Observation"
     }
-
     
     sampleproc <- function() {
       ## Sample processes
@@ -111,15 +109,15 @@ plot.cumres <- function(x, idx=1:length(x$variable),
       }
     }
 
-    with(x, plot(W[,i] ~ x0, type="n", lwd=2, ylab=ylab, ylim=ylim.,xlab=xlab,main=main));    
+    with(x, plot(W[,i] ~ x0, type="n", lwd=2, ylab=ylab, ylim=ylim.,xlab=xlab,main=main));
     if (col.alpha==0) {
       with(x, lines(W[,i] ~ x0, type="s", lwd=2));
-      predband()
+      if (!is.null(x$sd)) predband()
       sampleproc()
     } else {
       with(x, lines(W[,i] ~ x0, type="s", lwd=2));
       sampleproc()      
-      predband()
+       if (!is.null(x$sd)) predband()
     }
     
     if (!missing(title)) {
@@ -129,12 +127,16 @@ plot.cumres <- function(x, idx=1:length(x$variable),
         graphics::title(x$response)
     }
     
-    if (!is.null(legend) && legend[1]!="none" && (legend!=F)) {
-      if (legend[1]=="type1")
-        legend("topright", c(paste("KS-test: p=",x$KS[i],sep=""),paste("CvM-test: p=",x$CvM[i],sep="")), bg="white")
-      else
-        legend("topright", legendtxt, lty=legendlty, pch=legendpch, col=legendcol, lwd=legendlwd, pt.cex=legendcex, bg="white")
-    }
+    if (!is.null(legend) && legend[1]!="none" && (legend[1]!=F)) {
+        if (legend[1]=="type1") {
+            ltxt <- NULL
+            if (!is.null(x$KS)) ltxt <- c(ltxt,paste0("KS-test: p=",format(x$KS[i],digits=3)))
+            if (!is.null(x$CvM)) ltxt <- c(ltxt,paste0("CvM-test: p=",format(x$CvM[i],digits=3)))
+            legend("topright", ltxt, bg="white")
+            }
+            else
+                legend("topright", legendtxt, lty=legendlty, pch=legendpch, col=legendcol, lwd=legendlwd, pt.cex=legendcex, bg="white")
+        }        
     ylim. <- NULL
   }
   invisible(x)
