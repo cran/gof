@@ -18,34 +18,34 @@
 #include <cmath>
 
 // [[Rcpp::export]]
-double KolmogorovSmirnov(const arma::vec &x) {
-  return cumres::KolmogorovSmirnov(x);
+double SupTest(const arma::vec &x) {
+  return target::SupTest(x);
 }
 
 // [[Rcpp::export]]
-double CramerVonMises(const arma::vec &x, const arma::vec &t) {
-  return cumres::CramerVonMises(x, t);
+double L2Test(const arma::vec &x, const arma::vec &t) {
+  return target::L2Test(x, t);
 }
 
 RCPP_MODULE(gofmod) {
     using namespace Rcpp;
-    class_<cumres::cumres>("CumRes")
+    class_<target::cumres>("CumRes")
     // expose the constructor
       .constructor<arma::vec, 
 		   arma::mat,
 		   arma::mat>("Constructor")
-      .field( "t", &cumres::cumres::t )
-      .field( "ord", &cumres::cumres::ord )
-      .field( "r", &cumres::cumres::r )
-      .field( "qt", &cumres::cumres::qt )
+      .field( "inp", &target::cumres::inp )
+      .field( "ord", &target::cumres::ord )
+      .field( "r",   &target::cumres::r )
+      .field( "qt",  &target::cumres::qt )
 
-      .method("samplestat", (arma::mat (cumres::cumres::*)(unsigned, arma::uvec, bool ) )( &cumres::cumres::sample),
-      	       "sample process and return KS and CvM statistic")
-      .method("sample1", (arma::vec (cumres::cumres::*)(arma::uvec) )( &cumres::cumres::sample),
+      .method("samplestat", (arma::mat (target::cumres::*)(unsigned, const arma::umat&, bool ) )( &target::cumres::sample),
+      	       "sample process and return Sup and L2 statistic")
+      .method("sample1",    (arma::mat (target::cumres::*)(const arma::umat&) )( &target::cumres::sample),
 	       "sample process")      
-      .method("obs",    &cumres::cumres::obs,   "Return observed process")      
-      .method("rnorm",  &cumres::cumres::rnorm,   "Sample from Gaussian")
-      .method("reorder",  &cumres::cumres::reorder,  "Order observations after input variable")
+      .method("obs",    &target::cumres::obs,   "Return observed process")
+      .method("rnorm",  &target::cumres::rnorm,   "Sample from Gaussian")
+      .method("order",  &target::cumres::order,  "Order observations after input variable")
       ;
 }
 

@@ -6,10 +6,15 @@
 \alias{cumres.lm}
 \title{Calculates GoF statistics based on cumulative residual processes}
 \usage{
-\method{cumres}{glm}(model, variable = c("predicted",
-  colnames(model.matrix(model))), data = data.frame(model.matrix(model)),
-  R = 1000, b = 0, plots = min(R, 50), breakties = 1e-12,
-  seed = round(runif(1, 1, 1e+09)), ...)
+\method{cumres}{glm}(
+  model,
+  variable = c("predicted", colnames(model.matrix(model))),
+  data = data.frame(model.matrix(model)),
+  R = 1000,
+  b = 0,
+  plots = min(R, 50),
+  ...
+)
 }
 \arguments{
 \item{model}{Model object (\code{lm} or \code{glm})}
@@ -25,10 +30,6 @@ cumulated residuals)}
 
 \item{plots}{Number of realizations to save for use in the plot-routine}
 
-\item{breakties}{Add unif[0,breakties] to observations}
-
-\item{seed}{Random seed}
-
 \item{...}{additional arguments}
 }
 \value{
@@ -39,7 +40,7 @@ Given the generalized linear models model \deqn{g(E(Y_i|X_{i1},...,X_{ik})) =
 \sum_{i=1}^k \beta_jX_{ij}} the \code{cumres}-function calculates the the
 observed cumulative sum of residual process, cumulating the residuals,
 \eqn{e_i}, by the jth covariate: \deqn{W_j(t) = n^{-1/2}\sum_{i=1}^n
-1_{\{X_{ij}<t\}}e_i} and Kolmogorov-Smirnov and Cramer-von-Mises test
+1_{\{X_{ij}<t\}}e_i} and Sup and L2 test
 statistics are calculated via simulation from the asymptotic distribution of
 the cumulative residual process under the null (Lin et al., 2002).
 }

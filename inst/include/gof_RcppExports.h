@@ -25,17 +25,17 @@ namespace gof {
         }
     }
 
-    inline double KolmogorovSmirnov(const arma::vec& x) {
-        typedef SEXP(*Ptr_KolmogorovSmirnov)(SEXP);
-        static Ptr_KolmogorovSmirnov p_KolmogorovSmirnov = NULL;
-        if (p_KolmogorovSmirnov == NULL) {
-            validateSignature("double(*KolmogorovSmirnov)(const arma::vec&)");
-            p_KolmogorovSmirnov = (Ptr_KolmogorovSmirnov)R_GetCCallable("gof", "_gof_KolmogorovSmirnov");
+    inline double SupTest(const arma::vec& x) {
+        typedef SEXP(*Ptr_SupTest)(SEXP);
+        static Ptr_SupTest p_SupTest = NULL;
+        if (p_SupTest == NULL) {
+            validateSignature("double(*SupTest)(const arma::vec&)");
+            p_SupTest = (Ptr_SupTest)R_GetCCallable("gof", "_gof_SupTest");
         }
         RObject rcpp_result_gen;
         {
             RNGScope RCPP_rngScope_gen;
-            rcpp_result_gen = p_KolmogorovSmirnov(Shield<SEXP>(Rcpp::wrap(x)));
+            rcpp_result_gen = p_SupTest(Shield<SEXP>(Rcpp::wrap(x)));
         }
         if (rcpp_result_gen.inherits("interrupted-error"))
             throw Rcpp::internal::InterruptedException();
@@ -46,17 +46,17 @@ namespace gof {
         return Rcpp::as<double >(rcpp_result_gen);
     }
 
-    inline double CramerVonMises(const arma::vec& x, const arma::vec& t) {
-        typedef SEXP(*Ptr_CramerVonMises)(SEXP,SEXP);
-        static Ptr_CramerVonMises p_CramerVonMises = NULL;
-        if (p_CramerVonMises == NULL) {
-            validateSignature("double(*CramerVonMises)(const arma::vec&,const arma::vec&)");
-            p_CramerVonMises = (Ptr_CramerVonMises)R_GetCCallable("gof", "_gof_CramerVonMises");
+    inline double L2Test(const arma::vec& x, const arma::vec& t) {
+        typedef SEXP(*Ptr_L2Test)(SEXP,SEXP);
+        static Ptr_L2Test p_L2Test = NULL;
+        if (p_L2Test == NULL) {
+            validateSignature("double(*L2Test)(const arma::vec&,const arma::vec&)");
+            p_L2Test = (Ptr_L2Test)R_GetCCallable("gof", "_gof_L2Test");
         }
         RObject rcpp_result_gen;
         {
             RNGScope RCPP_rngScope_gen;
-            rcpp_result_gen = p_CramerVonMises(Shield<SEXP>(Rcpp::wrap(x)), Shield<SEXP>(Rcpp::wrap(t)));
+            rcpp_result_gen = p_L2Test(Shield<SEXP>(Rcpp::wrap(x)), Shield<SEXP>(Rcpp::wrap(t)));
         }
         if (rcpp_result_gen.inherits("interrupted-error"))
             throw Rcpp::internal::InterruptedException();

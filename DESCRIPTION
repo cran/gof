@@ -1,8 +1,8 @@
 Package: gof
 Type: Package
 Title: Model Diagnostics Based on Cumulative Residuals
-Version: 1.0.0
-Date: 2020-02-19
+Version: 1.0.1
+Date: 2020-03-15
 Author: Klaus K. Holst
 Maintainer: Klaus. K. Holst <klaus@holst.it>
 Description: Implementation of model-checking techniques for generalized linear
@@ -19,7 +19,7 @@ SystemRequirements: C++11
 ByteCompile: yes
 RcppModules: gofmod
 Encoding: UTF-8
-RoxygenNote: 6.1.1
-Packaged: 2020-02-24 17:46:05 UTC; klaus
+RoxygenNote: 7.0.2
+Packaged: 2020-03-15 17:14:43 UTC; klaus
 Repository: CRAN
-Date/Publication: 2020-02-25 10:00:05 UTC
+Date/Publication: 2020-03-15 22:20:08 UTC

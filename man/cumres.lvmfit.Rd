@@ -4,9 +4,18 @@
 \alias{cumres.lvmfit}
 \title{Cumulative residual processes for structural equation models}
 \usage{
-\method{cumres}{lvmfit}(model, y, x, full = FALSE,
-  data = model.frame(model), p, R = 1000, b = 0, plots = min(R,
-  50), ...)
+\method{cumres}{lvmfit}(
+  model,
+  y,
+  x,
+  full = FALSE,
+  data = model.frame(model),
+  p,
+  R = 1000,
+  b = 0,
+  plots = min(R, 50),
+  ...
+)
 }
 \arguments{
 \item{model}{\code{lvm} object}

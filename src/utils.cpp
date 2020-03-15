@@ -1,3 +1,4 @@
+
 /*!
   @file utils.cpp
   @author Klaus K. Holst
@@ -8,20 +9,9 @@
 */
 #include "utils.hpp"
 
-namespace cumres {
+namespace target {
   
-
-  arma::mat softmax(arma::mat &lp, bool ref=true, bool log=false) {
-    if (ref) lp.insert_cols(0, arma::zeros(lp.n_rows));
-    arma::colvec lpmax = arma::max(lp, 1);
-    lp.each_col() -= lpmax;
-    arma::colvec denom = sum(exp(lp), 1);
-    lp.each_col() -= arma::log(denom);
-    if (log) return(lp);
-    return(exp(lp));
-  }
-
-
+  // Complex step derivative
   arma::mat deriv(cx_func f, arma::vec theta) {
     arma::cx_vec thetac = arma::conv_to<arma::cx_vec>::from(theta);
     arma::cx_mat val0 = f(thetac);
@@ -40,44 +30,93 @@ namespace cumres {
     return(res);
   }  
 
-  // template arma::mat expit<double>(const arma::mat&);
-  // template arma::cx_mat expit<Complex>(const arma::cx_mat&);
 
-  arma::mat expit(arma::mat x) {
-    for (unsigned i=0; i<x.n_elem; i++) {
-      double z = x(i);
-      if (z>=0) {
-	x(i) = 1/(1+exp(-z));
-      } else {
-	z = exp(z);
-	x(i) = z/(1+z);
+  // Find index of clusters/ids in sorted integer vector
+  arma::umat clusterid(const arma::uvec &id) {
+    unsigned ncl = 1;
+    unsigned n = id.size();
+    unsigned id0 = id(0);
+    for (unsigned i=0; i<n; i++) {
+      if (id(i)!=id0) {
+	ncl++;
+	id0 = id(i);
       }
     }
-    return(x);
+    arma::umat res(ncl,2); // column 1: index, column 2: size
+    res.fill(0);
+    unsigned cl = 0;
+    id0 = id(0);
+    for (unsigned i=0; i<n; i++) {
+      if (id(i)!=id0) {
+	cl++;
+	res(cl,0) = i; // index
+	id0 = id(i);
+      }
+      res(cl,1)++; // size
+    }
+    return res;
   }
 
-  arma::cx_mat expit(arma::cx_mat x) {
-    return 1.0/(1+exp(-x));
+  
+  arma::mat groupsum(const arma::mat &x,
+		     const arma::uvec &cluster,
+		     bool reduce=true) {
+    unsigned ncl = cluster.n_elem;
+    unsigned n = ncl;
+    if (!reduce) {
+      n = x.n_rows;
+    }
+    unsigned start, stop;
+    arma::mat res(n, x.n_cols);
+    arma::rowvec tmp(x.n_cols);
+    for (unsigned i=0; i<ncl; i++) { // Iterate over individuals 
+      start = cluster(i);
+      if (i==(ncl-1)) {
+	stop = x.n_rows;
+      } else {
+	stop = cluster(i+1);
+      }
+      tmp.fill(0);      
+      for (unsigned j=start; j<stop; j++) {
+	tmp += x.row(j);
+      }
+      if (reduce) {
+	res.row(i) = tmp;
+      } else {
+	for (unsigned j=start; j<stop; j++) {
+	  res.row(j) = tmp;
+	}
+      }
+    }
+    return(res);
   }
 
-  arma::vec softmax(arma::vec u) {
-    double umax = u.max();
-    u -= umax;
-    double denom = sum(exp(u));  
-    return u - log(denom);
-  }
 
-  double KolmogorovSmirnov(const arma::vec &x) {
-    return arma::max(arma::abs(x));
+  double SupTest(const arma::vec &D) {
+    return arma::max(arma::abs(D));
   };
 
-  double CramerVonMises(const arma::vec &x, const arma::vec &t) {
+  double L2Test(const arma::vec &D, const arma::vec &t) {
     arma::vec delta(t.n_elem);
     for (unsigned i=0; i<t.n_elem-1; i++) delta(i) = t[i+1]-t[i];
     delta(delta.n_elem-1) = 0;
-    return std::sqrt(sum(delta % x % x));
+    return std::sqrt(sum(delta % D % D));
   }
 
+  // Comparison of ECDF of (x1,...,xn) with null CDF evaluated in G = (G(x1),...,G(xn))
+  double CramerVonMises(const arma::vec &x, arma::vec G) {
+    arma::uvec ord = arma::stable_sort_index(x); // back to original order of input data    
+    G = G.elem(ord);
+    unsigned n = G.n_elem;
+    double res = 1/(12*n);
+    for (unsigned i=0; i<G.n_elem; i++) {
+      double val = (2*i-1)/(2*n)-G(i);
+	res += val*val;
+    }
+    return res;
+  }
+ 
+  
   arma::mat const EmptyMat = arma::mat();
   arma::vec const EmptyVec = arma::vec();  
 
@@ -102,4 +141,4 @@ namespace cumres {
   const char* LCYAN     = "\x1b[96m";
   const char* LWHITE    = "\x1b[97m";
 
-} // namespace cumres
+} // namespace target

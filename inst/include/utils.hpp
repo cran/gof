@@ -14,7 +14,6 @@
 //#include "Rmath.h"
 #endif
 #if defined(ARMA_R)
-#define ARMA_DONT_USE_OPENMP
 #include <RcppArmadillo.h>
 #endif
 #include <cmath>
@@ -23,18 +22,18 @@
 #include <functional> // std::bind for using non-static member function as argument to free function
 
 
-using cx_dbl  = std::complex<double>;
-using cx_func = std::function<arma::cx_mat(arma::cx_vec theta)>;
-using matlist = std::vector<arma::mat>;
-
-namespace cumres {
+namespace target {  
+  using cx_dbl  = std::complex<double>;
+  using cx_func = std::function<arma::cx_mat(arma::cx_vec theta)>;
   
   arma::mat deriv(cx_func f, arma::vec theta);
-  arma::mat expit(arma::mat x);
-  arma::cx_mat expit(arma::cx_mat x);
-  arma::vec softmax(arma::vec u);
-  double KolmogorovSmirnov(const arma::vec &x);
-  double CramerVonMises(const arma::vec &x, const arma::vec &t);
+
+  arma::umat clusterid(const arma::uvec &id);  
+  arma::mat groupsum(const arma::mat &x, const arma::uvec &cluster, bool reduce);  
+  
+  double SupTest(const arma::vec &D);
+  double L2Test(const arma::vec &D, const arma::vec &t);  
+  double CramerVonMises(const arma::vec &x, const arma::vec &G);
 
   extern arma::mat const EmptyMat;
   extern arma::vec const EmptyVec;  
@@ -58,4 +57,4 @@ namespace cumres {
   extern const char* LCYAN;
   extern const char* LWHITE;
   
-}  // namespace cumres
+}  // namespace target
